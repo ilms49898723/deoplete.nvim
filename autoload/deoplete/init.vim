@@ -245,6 +245,7 @@ function! deoplete#init#_option() abort
         \ 'candidate_marks': [],
         \ 'check_stderr': v:true,
         \ 'complete_suffix': v:true,
+        \ 'hier_mark_ignore': ['around', 'buffer'],
         \ 'ignore_case': &ignorecase,
         \ 'ignore_sources': {},
         \ 'keyword_patterns': {'_': '[a-zA-Z_]\k*'},

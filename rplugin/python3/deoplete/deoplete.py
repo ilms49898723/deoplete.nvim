@@ -39,6 +39,10 @@ class Deoplete(logger.LoggingMixin):
         self._max_parents = self._vim.call('deoplete#custom#_get_option',
                                            'num_processes')
 
+        self._hier_mark_ignore = self._vim.call('deoplete#custom#_get_option',
+                                                'hier_mark_ignore')
+        self._hier_mark_ignore = set(self._hier_mark_ignore)
+
         if self._max_parents != 1 and not hasattr(self._vim, 'loop'):
             msg = ('pynvim 0.3.0+ is required for %d parents. '
                    'Using single process.' % self._max_parents)
@@ -304,11 +308,15 @@ class Deoplete(logger.LoggingMixin):
             self._custom = context['custom']
 
     def _littlebird_update_markers(self, results):
+        ignore_sources = self._hier_mark_ignore
         word2menu = dict()
         for result in reversed(results):
             updated = set()
             candidates = result['candidates']
             for candidate in candidates:
+                source = candidate['source']
+                if source in ignore_sources:
+                    continue
                 word = candidate['word']
                 menu = candidate['menu']
                 if word in updated:
@@ -321,5 +329,6 @@ class Deoplete(logger.LoggingMixin):
         for i in range(len(results)):
             for j in range(len(results[i]['candidates'])):
                 word = results[i]['candidates'][j]['word']
-                results[i]['candidates'][j]['menu'] = word2menu[word][1]
+                if word in word2menu:
+                    results[i]['candidates'][j]['menu'] = word2menu[word][1]
         return results
