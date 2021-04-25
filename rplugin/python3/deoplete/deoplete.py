@@ -197,8 +197,9 @@ class Deoplete(logger.LoggingMixin):
         complete_position = min(x['complete_position'] for x in results)
 
         all_candidates: typing.List[Candidates] = []
-        for result in sorted(results,
-                             key=lambda x: int(x['rank']), reverse=True):
+        results = sorted(results, key=lambda x: int(x['rank']), reverse=True)
+        results = self._littlebird_update_markers(results)
+        for result in results:
             candidates = result['candidates']
             prefix = context['input'][
                 complete_position:result['complete_position']]
@@ -301,3 +302,24 @@ class Deoplete(logger.LoggingMixin):
         elif context['custom'] != self._custom:
             self._set_source_attributes(context)
             self._custom = context['custom']
+
+    def _littlebird_update_markers(self, results):
+        word2menu = dict()
+        for result in reversed(results):
+            updated = set()
+            candidates = result['candidates']
+            for candidate in candidates:
+                word = candidate['word']
+                menu = candidate['menu']
+                if word in updated:
+                    continue
+                updated.add(word)
+                if word not in word2menu:
+                    word2menu[word] = (menu, menu)
+                else:
+                    word2menu[word] = (menu, word2menu[word][0])
+        for i in range(len(results)):
+            for j in range(len(results[i]['candidates'])):
+                word = results[i]['candidates'][j]['word']
+                results[i]['candidates'][j]['menu'] = word2menu[word][1]
+        return results
